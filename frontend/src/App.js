@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import Login from "./Login";
+import Profile from "./Profile";
+import AdminPanel from "./AdminPanel";
+import DiceGame from "./DiceGame";
+import SlotsGame from "./SlotsGame";
+import RouletteGame from "./RouletteGame";
+import PlinkoGame from "./PlinkoGame";
+import WheelGame from "./WheelGame";
 
 // Game Components
 const BlackjackGame = ({ tymCoins, setTymCoins }) => {
@@ -522,92 +530,88 @@ const CrashGame = ({ tymCoins, setTymCoins }) => {
 };
 
 function App() {
-  const [tymCoins, setTymCoins] = useState(() => {
-    const saved = localStorage.getItem('tymCoins');
-    return saved ? parseInt(saved) : 100;
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem('currentUser');
+    return stored ? JSON.parse(stored) : null;
   });
-  
+  const [tymCoins, setTymCoins] = useState(100);
   const [currentGame, setCurrentGame] = useState('blackjack');
+  const [page, setPage] = useState('games');
 
   useEffect(() => {
-    localStorage.setItem('tymCoins', tymCoins.toString());
+    if (user) setTymCoins(user.balance);
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      const updated = { ...user, balance: tymCoins };
+      setUser(updated);
+      const users = JSON.parse(localStorage.getItem('users') || '{}');
+      if (users[user.username]) {
+        users[user.username].balance = tymCoins;
+        localStorage.setItem('users', JSON.stringify(users));
+      }
+      localStorage.setItem('currentUser', JSON.stringify(updated));
+    }
   }, [tymCoins]);
 
-  const resetCoins = () => {
-    setTymCoins(100);
+  if (!user) {
+    return <Login onLogin={setUser} />;
+  }
+
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem('currentUser');
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black">
-      {/* Header */}
-      <header className="bg-black bg-opacity-50 p-4">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-4xl font-bold text-yellow-400">🪙 TymCasino</h1>
-          <div className="flex items-center space-x-4">
-            <div className="text-white text-xl">
-              Balance: <span className="text-yellow-400 font-bold">{tymCoins.toFixed(2)} TymCoins</span>
-            </div>
-            <button 
-              onClick={resetCoins}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-            >
-              Reset (100 TymCoins)
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Navigation */}
+  const showGames = (
+    <>
       <nav className="bg-black bg-opacity-30 p-4">
         <div className="max-w-6xl mx-auto">
-          <div className="flex justify-center space-x-8">
-            <button 
-              onClick={() => setCurrentGame('blackjack')}
-              className={`px-6 py-3 rounded-lg font-bold transition-all ${
-                currentGame === 'blackjack' 
-                  ? 'bg-yellow-500 text-black' 
-                  : 'bg-gray-700 text-white hover:bg-gray-600'
-              }`}
-            >
-              ♠ Blackjack
-            </button>
-            <button 
-              onClick={() => setCurrentGame('mines')}
-              className={`px-6 py-3 rounded-lg font-bold transition-all ${
-                currentGame === 'mines' 
-                  ? 'bg-yellow-500 text-black' 
-                  : 'bg-gray-700 text-white hover:bg-gray-600'
-              }`}
-            >
-              💣 Mines
-            </button>
-            <button 
-              onClick={() => setCurrentGame('crash')}
-              className={`px-6 py-3 rounded-lg font-bold transition-all ${
-                currentGame === 'crash' 
-                  ? 'bg-yellow-500 text-black' 
-                  : 'bg-gray-700 text-white hover:bg-gray-600'
-              }`}
-            >
-              🚀 Crash
-            </button>
+          <div className="flex flex-wrap justify-center space-x-4">
+            {['blackjack','mines','crash','dice','slots','roulette','plinko','wheel'].map(g => (
+              <button
+                key={g}
+                onClick={() => setCurrentGame(g)}
+                className={`px-4 py-2 m-1 rounded-lg font-bold transition-all ${currentGame===g?'bg-yellow-500 text-black':'bg-gray-700 text-white hover:bg-gray-600'}`}
+              >
+                {g}
+              </button>
+            ))}
           </div>
         </div>
       </nav>
-
-      {/* Main Game Area */}
       <main className="max-w-4xl mx-auto p-6">
         {currentGame === 'blackjack' && <BlackjackGame tymCoins={tymCoins} setTymCoins={setTymCoins} />}
         {currentGame === 'mines' && <MinesGame tymCoins={tymCoins} setTymCoins={setTymCoins} />}
         {currentGame === 'crash' && <CrashGame tymCoins={tymCoins} setTymCoins={setTymCoins} />}
+        {currentGame === 'dice' && <DiceGame user={user} setUser={setUser} />}
+        {currentGame === 'slots' && <SlotsGame user={user} setUser={setUser} />}
+        {currentGame === 'roulette' && <RouletteGame user={user} setUser={setUser} />}
+        {currentGame === 'plinko' && <PlinkoGame user={user} setUser={setUser} />}
+        {currentGame === 'wheel' && <WheelGame user={user} setUser={setUser} />}
       </main>
+    </>
+  );
 
-      {/* Footer */}
-      <footer className="bg-black bg-opacity-50 p-4 mt-8">
-        <div className="max-w-6xl mx-auto text-center text-white">
-          <p>🎲 TymCasino - Play Responsibly with TymCoins 🎲</p>
-          <p className="text-sm text-gray-400 mt-2">Virtual currency for entertainment purposes only</p>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-black">
+      <header className="bg-black bg-opacity-50 p-4">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <h1 className="text-4xl font-bold text-yellow-400">🪙 TymCasino</h1>
+          <div className="flex items-center space-x-4">
+            <div className="text-white text-xl">Balance: <span className="text-yellow-400 font-bold">{tymCoins.toFixed(2)} TymCoins</span></div>
+            <button onClick={()=>setPage('profile')} className="bg-gray-700 text-white px-3 py-1 rounded">Profile</button>
+            {user.isAdmin && <button onClick={()=>setPage('admin')} className="bg-gray-700 text-white px-3 py-1 rounded">Admin</button>}
+            <button onClick={logout} className="bg-red-600 text-white px-3 py-1 rounded">Logout</button>
+          </div>
         </div>
+      </header>
+      {page==='profile' && <Profile user={user} setUser={setUser} />}
+      {page==='admin' && user.isAdmin && <AdminPanel />}
+      {page==='games' && showGames}
+      <footer className="bg-black bg-opacity-50 p-4 mt-8 text-center text-white">
+        <p>🎲 TymCasino - Play Responsibly with TymCoins 🎲</p>
       </footer>
     </div>
   );
