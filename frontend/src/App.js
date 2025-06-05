@@ -389,10 +389,21 @@ const MinesGame = ({ tymCoins, setTymCoins }) => {
 const CrashGame = ({ tymCoins, setTymCoins }) => {
   const [gameState, setGameState] = useState('betting');
   const [bet, setBet] = useState(10);
-  const [multiplier, setMultiplier] = useState(1.00);
+  const [multiplier, setMultiplier] = useState(1.0);
   const [crashPoint, setCrashPoint] = useState(0);
   const [gameResult, setGameResult] = useState('');
   const [cashOutPoint, setCashOutPoint] = useState(0);
+
+  // Store the interval so we can clear it on cash out or unmount
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, []);
 
   const generateCrashPoint = () => {
     // Generate crash point between 1.75x and 3x with some randomness
@@ -407,27 +418,33 @@ const CrashGame = ({ tymCoins, setTymCoins }) => {
 
   const startGame = () => {
     if (bet > tymCoins || bet < 1) return;
-    
+
+    // Ensure any previous interval is cleared
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
     setTymCoins(prev => prev - bet);
     const newCrashPoint = generateCrashPoint();
     setCrashPoint(newCrashPoint);
-    setMultiplier(1.00);
+    setMultiplier(1.0);
     setGameState('flying');
     setGameResult('');
     setCashOutPoint(0);
-    
+
     // Start the rocket animation
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setMultiplier(prev => {
         const newMultiplier = prev + 0.02;
-        
+
         if (newMultiplier >= newCrashPoint) {
-          clearInterval(interval);
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
           setGameResult(`💥 CRASHED at ${newCrashPoint.toFixed(2)}x!`);
           setGameState('crashed');
           return newCrashPoint;
         }
-        
+
         return newMultiplier;
       });
     }, 50);
@@ -438,12 +455,20 @@ const CrashGame = ({ tymCoins, setTymCoins }) => {
     setTymCoins(prev => prev + winnings);
     setCashOutPoint(multiplier);
     setGameResult(`🚀 Cashed out at ${multiplier.toFixed(2)}x! Won ${winnings.toFixed(2)} TymCoins!`);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     setGameState('finished');
   };
 
   const resetGame = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     setGameState('betting');
-    setMultiplier(1.00);
+    setMultiplier(1.0);
     setCrashPoint(0);
     setGameResult('');
     setCashOutPoint(0);
