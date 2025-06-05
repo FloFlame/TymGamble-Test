@@ -45,7 +45,7 @@ const BlackjackGame = ({ tymCoins, setTymCoins }) => {
   };
 
   const startGame = () => {
-    if (bet > tymCoins) return;
+    if (bet > tymCoins || bet < 1) return;
     
     setTymCoins(prev => prev - bet);
     const newPlayerCards = [createCard(), createCard()];
