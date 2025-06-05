@@ -521,6 +521,74 @@ const CrashGame = ({ tymCoins, setTymCoins }) => {
   );
 };
 
+// Simple Plinko board using ASCII Xs
+const PlinkoGame = () => {
+  const board = [
+    '          X          ',
+    '         X X         ',
+    '        X   X        ',
+    '       X X X X       ',
+    '      X   X   X      ',
+    '     X X X X X X     ',
+  ];
+
+  return (
+    <div className="flex flex-col items-center justify-center h-screen bg-purple-900 text-yellow-400 font-mono text-2xl leading-none">
+      {board.map((row, i) => (
+        <pre key={i}>{row}</pre>
+      ))}
+    </div>
+  );
+};
+
+// Minimal roulette wheel with spinning animation
+const RouletteGame = () => {
+  const segments = Array.from({ length: 12 }, (_, i) => i);
+  const [rotation, setRotation] = useState(0);
+  const [result, setResult] = useState(null);
+
+  const spin = () => {
+    const winning = Math.floor(Math.random() * segments.length);
+    const angle = 360 / segments.length;
+    setRotation((prev) => prev + 720 + winning * angle);
+    setResult(winning);
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center h-screen bg-purple-900 text-yellow-400">
+      <div className="relative w-64 h-64 mb-6">
+        <div
+          className="absolute inset-0 rounded-full border-8 border-yellow-400"
+          style={{ transform: `rotate(${rotation}deg)`, transition: 'transform 3s ease-out' }}
+        >
+          {segments.map((n, i) => {
+            const angle = (i / segments.length) * 360;
+            const radius = 80;
+            const x = 100 + radius * Math.cos((angle * Math.PI) / 180);
+            const y = 100 + radius * Math.sin((angle * Math.PI) / 180);
+            return (
+              <div
+                key={n}
+                style={{ position: 'absolute', left: x, top: y, transform: `translate(-50%, -50%) rotate(${-rotation}deg)` }}
+                className="text-sm"
+              >
+                {n}
+              </div>
+            );
+          })}
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-4 h-4 bg-yellow-400 rounded-full" />
+        </div>
+      </div>
+      <button onClick={spin} className="bg-yellow-400 text-purple-900 px-6 py-2 rounded-lg font-bold">
+        Spin
+      </button>
+      {result !== null && <div className="mt-4 text-2xl">Result: {result}</div>}
+    </div>
+  );
+};
+
 function App() {
   const [tymCoins, setTymCoins] = useState(() => {
     const saved = localStorage.getItem('tymCoins');
@@ -581,15 +649,35 @@ function App() {
             >
               💣 Mines
             </button>
-            <button 
+            <button
               onClick={() => setCurrentGame('crash')}
               className={`px-6 py-3 rounded-lg font-bold transition-all ${
-                currentGame === 'crash' 
-                  ? 'bg-yellow-500 text-black' 
+                currentGame === 'crash'
+                  ? 'bg-yellow-500 text-black'
                   : 'bg-gray-700 text-white hover:bg-gray-600'
               }`}
             >
               🚀 Crash
+            </button>
+            <button
+              onClick={() => setCurrentGame('plinko')}
+              className={`px-6 py-3 rounded-lg font-bold transition-all ${
+                currentGame === 'plinko'
+                  ? 'bg-yellow-500 text-black'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              }`}
+            >
+              🎯 Plinko
+            </button>
+            <button
+              onClick={() => setCurrentGame('roulette')}
+              className={`px-6 py-3 rounded-lg font-bold transition-all ${
+                currentGame === 'roulette'
+                  ? 'bg-yellow-500 text-black'
+                  : 'bg-gray-700 text-white hover:bg-gray-600'
+              }`}
+            >
+              🎡 Roulette
             </button>
           </div>
         </div>
@@ -600,6 +688,8 @@ function App() {
         {currentGame === 'blackjack' && <BlackjackGame tymCoins={tymCoins} setTymCoins={setTymCoins} />}
         {currentGame === 'mines' && <MinesGame tymCoins={tymCoins} setTymCoins={setTymCoins} />}
         {currentGame === 'crash' && <CrashGame tymCoins={tymCoins} setTymCoins={setTymCoins} />}
+        {currentGame === 'plinko' && <PlinkoGame />}
+        {currentGame === 'roulette' && <RouletteGame />}
       </main>
 
       {/* Footer */}
